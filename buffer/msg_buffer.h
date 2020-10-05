@@ -39,8 +39,6 @@ typedef struct message_arg_t {
 typedef struct message_t {
 	int		message;		//message id
 	int		uid;			//unique random id
-	int		type;			//0:get resource; 1:set resource; 2:set resource and wait for target_status
-	int		target_status;	//quite requirement
 	int		sender;
 	int		receiver;
 	int		result;
@@ -70,5 +68,6 @@ void msg_buffer_init(message_buffer_t *buff, int overflow);
 void msg_buffer_release(message_buffer_t *buff);
 int msg_init(message_t *data);
 int msg_free(message_t *data);
+int msg_deep_copy(message_t *dest, message_t *source);
 
 #endif /* TOOLS_BUFFER_MESSAGE_BUFFER_H_ */
