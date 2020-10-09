@@ -17,6 +17,7 @@
 #include "cJSON/cJSON.h"
 #include "buffer/msg_buffer.h"
 #include "log.h"
+#include "h264.h"
 
 /*
  * define
