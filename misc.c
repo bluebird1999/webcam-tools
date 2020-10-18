@@ -15,6 +15,8 @@
 #include <syscall.h>
 #include <sys/prctl.h>
 #include <sys/time.h>
+#include <malloc.h>
+#include <dmalloc.h>
 //program header
 
 //server header
@@ -76,4 +78,12 @@ int misc_set_bit(int *a, int bit, int value)
 int misc_clear_bit(int *a, int bit)
 {
 	*a &= ~(0x1<<bit);
+}
+
+int misc_full_bit(int a, int num)
+{
+	if( a == ((1<<num) -1) )
+		return 1;
+	else
+		return 0;
 }

@@ -11,6 +11,7 @@
 /*
  * header
  */
+#include <time.h>
 
 /*
  * define

@@ -16,6 +16,8 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <malloc.h>
+#include <dmalloc.h>
 //program header
 #include "../log.h"
 //server header

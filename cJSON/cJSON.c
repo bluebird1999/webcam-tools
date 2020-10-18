@@ -44,7 +44,8 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <ctype.h>
-
+#include <malloc.h>
+#include <dmalloc.h>
 #ifdef ENABLE_LOCALES
 #include <locale.h>
 #endif

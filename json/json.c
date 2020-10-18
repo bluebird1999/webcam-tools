@@ -22,6 +22,8 @@
 #include <poll.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <malloc.h>
+#include <dmalloc.h>
 //program header
 
 //server header

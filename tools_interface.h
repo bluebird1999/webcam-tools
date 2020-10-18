@@ -16,13 +16,14 @@
 #include "json/json.h"
 #include "cJSON/cJSON.h"
 #include "buffer/msg_buffer.h"
+#include "config/rwio.h"
 #include "log.h"
 #include "h264.h"
 
 /*
  * define
  */
-#define		TOOLS_VERSION_STRING		"alpha-3.3"
+#define		TOOLS_VERSION_STRING		"alpha-3.4"
 
 /*
  * structure

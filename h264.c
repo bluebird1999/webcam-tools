@@ -15,6 +15,8 @@
 #include <syscall.h>
 #include <sys/prctl.h>
 #include <sys/time.h>
+#include <malloc.h>
+#include <dmalloc.h>
 //program header
 
 //server header

@@ -28,5 +28,6 @@ void misc_set_thread_name(char *name);
 int misc_get_bit(int a, int bit);
 int misc_set_bit(int *a, int bit, int value);
 int misc_clear_bit(int *a, int bit);
+int misc_full_bit(int a, int num);
 
 #endif /* TOOLS_MISC_H_ */

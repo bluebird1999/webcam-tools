@@ -33,7 +33,7 @@ typedef struct message_arg_t {
 	int			chick;
 	int			tiger;
 	int			wolf;
-	HAND		handler;	//pure pointer or function pointer, no further memory management
+	void		*handler;	//pure pointer or function pointer, no further memory management
 } message_arg_t;
 
 typedef struct message_t {
