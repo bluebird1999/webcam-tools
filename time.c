@@ -13,7 +13,9 @@
 #define __USE_XOPEN
 #include <stdio.h>
 #include <time.h>
-#include <sys/time.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <malloc.h>
 #include <dmalloc.h>
 //program header
@@ -62,10 +64,26 @@ void time_get_now_str(char *str)
 
 long long int time_date_to_stamp(char *date)
 {
-	struct tm* tmp_time = (struct tm*)malloc(sizeof(struct tm));
-	strptime(date,"%Y%m%d%H%M%S",tmp_time);
-	time_t t = mktime(tmp_time);
-	free(tmp_time);
+//	struct tm* tmp_time = (struct tm*)malloc(sizeof(struct tm));
+//	strptime(date,"%Y%m%d%H%M%S",tmp_time);
+//	time_t t = mktime(tmp_time);
+//	free(tmp_time);
+    struct 	tm tm;
+    char	temp[4];
+    memset(&tm, 0, sizeof(struct tm));
+    misc_substr(temp, date, 0, 4);
+    tm.tm_year = atoi( temp ) - 1900;
+    misc_substr(temp, date, 4, 2);
+    tm.tm_mon = atoi( temp ) - 1;
+    misc_substr(temp, date, 6, 2);
+    tm.tm_mday = atoi( temp );
+    misc_substr(temp, date, 8, 2);
+    tm.tm_hour = atoi( temp );
+    misc_substr(temp, date, 10, 2);
+    tm.tm_min = atoi( temp );
+    misc_substr(temp, date, 12, 2);
+    tm.tm_sec = atoi( temp );
+	time_t t = mktime(&tm);
 	return t;
 }
 

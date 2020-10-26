@@ -23,7 +23,7 @@
 /*
  * define
  */
-#define		TOOLS_VERSION_STRING		"alpha-3.4"
+#define		TOOLS_VERSION_STRING		"alpha-3.5"
 
 /*
  * structure

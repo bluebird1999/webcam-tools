@@ -87,3 +87,14 @@ int misc_full_bit(int a, int num)
 	else
 		return 0;
 }
+
+
+int misc_substr(char dst[], char src[], int start, int len)
+{
+    int i;
+    for(i=0;i<len;i++) {
+        dst[i]=src[start+i];
+    }
+    dst[i]='\0';
+    return i;
+}

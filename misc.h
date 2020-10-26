@@ -29,5 +29,6 @@ int misc_get_bit(int a, int bit);
 int misc_set_bit(int *a, int bit, int value);
 int misc_clear_bit(int *a, int bit);
 int misc_full_bit(int a, int num);
+int misc_substr(char *dst, char *src, int start, int len);
 
 #endif /* TOOLS_MISC_H_ */
