@@ -15,7 +15,7 @@
 /*
  * define
  */
-#define		MSG_BUFFER_SIZE					16
+#define		MSG_BUFFER_SIZE					32
 #define 	MSG_BUFFER_MASK 				(MSG_BUFFER_SIZE-1)
 
 #define		MSG_BUFFER_OVERFLOW_NO			0		//neglect new data when overflow

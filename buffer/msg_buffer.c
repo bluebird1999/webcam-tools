@@ -74,7 +74,8 @@ int msg_deep_copy(message_t *dest, message_t *source)
 	if(  source->arg_size > 0 && source->arg != NULL) {
 		block = calloc( source->arg_size, 1);
 		if( block == NULL ) {
-			log_err("buffer memory allocation failed for size=%d", source->arg_size );
+			log_err("!!!!!!!!!!!!!!!!!!!!!!!!!1buffer memory allocation failed for size=%d!!!!!!!!!!!!!!!!!!!!!!!!!!!!", source->arg_size );
+			log_err("msg from %d and message = %d", source->sender, source->message );
 			return -1;
 		}
 		//deep structure copy
@@ -85,7 +86,8 @@ int msg_deep_copy(message_t *dest, message_t *source)
 	if(  source->extra_size > 0 && source->extra != NULL) {
 		block = calloc( source->extra_size, 1);
 		if( block == NULL ) {
-			log_err("buffer memory allocation failed for size=%d", source->extra_size );
+			log_err("!!!!!!!!!!!!!!!!!!!!!!!!!!!!buffer memory allocation failed for size=%d!!!!!!!!!!!!!!!!!!!!!!!!!!!!", source->extra_size );
+			log_err("msg from %d and message = %d", source->sender, source->message );
 			return -1;
 		}
 		//deep structure copy
