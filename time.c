@@ -17,7 +17,6 @@
 #include <string.h>
 #include <time.h>
 #include <malloc.h>
-#include <dmalloc.h>
 //program header
 
 //server header
@@ -45,6 +44,15 @@ unsigned int time_get_now_ms(void)
     return time;
 }
 
+unsigned int time_get_ms(void)
+{
+    struct timeval tv;
+    unsigned int time;
+    gettimeofday(&tv, NULL);
+    time = tv.tv_usec / 1000;
+    return time;
+}
+
 void time_get_now_str(char *str)
 {
     struct tm *ptm;
@@ -58,6 +66,21 @@ void time_get_now_str(char *str)
 											 ptm->tm_hour,
 											 ptm->tm_min,
 											 ptm->tm_sec);
+
+    return;
+}
+
+void time_get_now_str_format(char *str)
+{
+    struct tm *ptm;
+    long ts;
+    ts = time(NULL);
+    struct tm tt = {0};
+    ptm = localtime_r(&ts, &tt);
+	sprintf(str, "%02d:%02d:%02d.%03d", 	 ptm->tm_hour,
+											 ptm->tm_min,
+											 ptm->tm_sec,
+											 time_get_ms());
 
     return;
 }

@@ -12,7 +12,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <malloc.h>
-#include <dmalloc.h>
 //program header
 #include "../../tools/tools_interface.h"
 #include "../../manager/manager_interface.h"
@@ -42,7 +41,7 @@ int read_config_file(config_map_t *map, char *fpath)
 	cJSON *root;
 	root = load_json(fpath);
 	if( cjson_to_data_by_map(map,root) ) {
-		log_err("Reading mi configuration file failed: %s", fpath);
+		log_qcy(DEBUG_SERIOUS, "Reading mi configuration file failed: %s", fpath);
 		return -1;
 	}
 	cJSON_Delete(root);
@@ -58,7 +57,7 @@ int write_config_file(config_map_t *map, char *fpath)
     out = cJSON_Print(root);
     int ret = write_json_file(fpath, out);
     if (ret != 0) {
-        log_err("CfgWriteToFile %s error.", fpath);
+        log_qcy(DEBUG_SERIOUS, "CfgWriteToFile %s error.", fpath);
         free(out);
         return -1;
     }
@@ -113,13 +112,13 @@ int write_json_file(const char *file, const char *data)
     FILE *fp = NULL;
     fp = fopen(file, "wb+");
     if (fp == NULL) {
-        log_err("fopen:%s fail\n", file);
+        log_qcy(DEBUG_SERIOUS, "fopen:%s fail\n", file);
         return -1;
     }
 
     int len = strlen(data);
     if (fwrite(data, 1, len, fp) != len) {
-        log_err("fwrite:%s fail\n", file);
+        log_qcy(DEBUG_SERIOUS, "fwrite:%s fail\n", file);
         fclose(fp);
         return -1;
     }
@@ -134,13 +133,13 @@ cJSON* load_json(const char *file)
     char *data = NULL;
     data = read_json_file(file);
     if (data == NULL) {
-        log_info("load %s error, so to load default cfg param.\n", file);
+        log_qcy(DEBUG_SERIOUS, "load %s error, so to load default cfg param.\n", file);
         return NULL;
     }
     cJSON *json = NULL;
     json = cJSON_Parse(data);
     if (!json) {
-        log_err("Error before: [%s]\n", cJSON_GetErrorPtr());
+        log_qcy(DEBUG_SERIOUS, "Error before: [%s]\n", cJSON_GetErrorPtr());
         free(data);
         return NULL;
     }
@@ -207,12 +206,12 @@ int cjson_to_data_by_map(config_map_t *map, cJSON *json)
                     strncpy((char *)map[i].data_address, js->valuestring, tmp);
                     ((char *)map[i].data_address)[tmp] = '\0';
                 } else {
-                    log_err("if type is string, addr can't be null and the upper limit must greater than 1.");
+                    log_qcy(DEBUG_SERIOUS, "if type is string, addr can't be null and the upper limit must greater than 1.");
                 }
                 break;
             default:
             	ret = 1;
-                log_err("unknown data type in map definition!\n");
+                log_qcy(DEBUG_SERIOUS, "unknown data type in map definition!\n");
                 break;
         }
         i++;
@@ -276,7 +275,7 @@ int data_to_json_by_map(config_map_t *map, cJSON *root)
 				cJSON_AddStringToObject(root, map[i].string_name, (char *)map[i].data_address);//
 				break;
 			default:
-				log_err("unknown data type in map definition!\n");
+				log_qcy(DEBUG_SERIOUS, "unknown data type in map definition!\n");
 				break;
 		}
 //	    config_add_property(map, root);

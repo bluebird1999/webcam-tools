@@ -47,8 +47,10 @@ typedef struct scheduler_slice_t {
  */
 unsigned int time_get_now_ms(void);
 void time_get_now_str(char *str);
+void time_get_now_str_format(char *str);
 long long int time_date_to_stamp(char *date);
 long long int time_get_now_stamp(void);
 int time_stamp_to_date(long long int stamp, char *date);
+unsigned int time_get_ms(void);
 
 #endif /* TOOLS_TIME_H_ */
