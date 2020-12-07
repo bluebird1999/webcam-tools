@@ -59,7 +59,7 @@ void misc_set_thread_name(char *name)
     prctl(PR_SET_NAME, (unsigned long)name, 0,0,0);
     pid_t tid;
     tid = syscall(SYS_gettid);
-    log_qcy(DEBUG_SERIOUS, "set pthread name:%d, %s, %s pid:%d tid:%d\n", __LINE__, __func__, name, getpid(), tid);
+    log_qcy(DEBUG_INFO, "set pthread name:%d, %s, %s pid:%d tid:%d\n", __LINE__, __func__, name, getpid(), tid);
 
 }
 

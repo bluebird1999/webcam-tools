@@ -19,11 +19,12 @@
 #include "config/rwio.h"
 #include "log.h"
 #include "h264.h"
+#include "memory/elr_mpl.h"
 
 /*
  * define
  */
-#define		TOOLS_VERSION_STRING		"alpha-3.8"
+#define		TOOLS_VERSION_STRING		"alpha-4.0"
 
 /*
  * structure

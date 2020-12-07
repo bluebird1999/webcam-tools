@@ -31,48 +31,57 @@
 //function;
 
 //specific
-static int msg_buffer_is_empty(message_buffer_t *buffer);
-static int msg_buffer_is_full(message_buffer_t *buffer);
-static int msg_buffer_num_items(message_buffer_t *buffer);
 /*
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  */
-
-/*
- * helper
- */
-static int msg_buffer_is_empty(message_buffer_t *buffer)
-{
-  return (buffer->head == buffer->tail);
-}
-
-static int msg_buffer_is_full(message_buffer_t *buffer)
-{
-  return ((buffer->head - buffer->tail) & MSG_BUFFER_MASK) == MSG_BUFFER_MASK;
-}
-
-static int msg_buffer_num_items(message_buffer_t *buffer)
-{
-  return ((buffer->head - buffer->tail) & MSG_BUFFER_MASK);
-}
 
 /*
  * interface
  */
+int msg_buffer_is_empty(message_buffer_t *buffer)
+{
+  return (buffer->head == buffer->tail);
+}
+
+int msg_buffer_is_full(message_buffer_t *buffer)
+{
+  return ((buffer->head - buffer->tail) & MSG_BUFFER_MASK) == MSG_BUFFER_MASK;
+}
+
+int msg_buffer_num_items(message_buffer_t *buffer)
+{
+  return ((buffer->head - buffer->tail) & MSG_BUFFER_MASK);
+}
+
+
 int msg_deep_copy(message_t *dest, message_t *source)
 {
 	unsigned char *block;
 	if( dest->arg_size > 0 && dest->arg != NULL) {
-		free(dest->arg);
+		#ifdef MEMORY_POOL
+			elr_mpl_free(dest->arg);
+		#else
+			free(dest->arg);
+		#endif
 	}
 	if( dest->extra_size > 0 && dest->extra != NULL) {
-		free(dest->extra);
+		#ifdef MEMORY_POOL
+			elr_mpl_free(dest->extra);
+		#else
+			free(dest->extra);
+		#endif
 	}
 	memcpy( dest, source, sizeof(message_t));
 	if(  source->arg_size > 0 && source->arg != NULL) {
-		block = calloc( source->arg_size, 1);
+		#ifdef MEMORY_POOL
+			block = elr_mpl_alloc( &_pool_);
+			memset(block,0,source->arg_size);
+		#else
+			block = calloc( source->arg_size, 1);
+		#endif
+//		log_qcy(DEBUG_INFO, "+++++++++++++++++++new allocation here size = %d", source->arg_size);
 		if( block == NULL ) {
 			log_qcy(DEBUG_SERIOUS, "!!!!!!!!!!!!!!!!!!!!!!!!!1buffer memory allocation failed for arg_size=%d!!!!!!!!!!!!!!!!!!!!!!!!!!!!", source->arg_size );
 			log_qcy(DEBUG_SERIOUS, "msg from %d and message = %x", source->sender, source->message );
@@ -84,7 +93,13 @@ int msg_deep_copy(message_t *dest, message_t *source)
 	}
 	block = NULL;
 	if(  source->extra_size > 0 && source->extra != NULL) {
-		block = calloc( source->extra_size, 1);
+//		log_qcy(DEBUG_INFO, "+++++++++++++++++++new allocation here size = %d", source->extra_size);
+		#ifdef MEMORY_POOL
+			block = elr_mpl_alloc( &_pool_);
+			memset(block,0,source->extra_size);
+		#else
+			block = calloc( source->extra_size, 1);
+		#endif
 		if( block == NULL ) {
 			log_qcy(DEBUG_SERIOUS, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!buffer memory allocation failed for extra_size=%d!!!!!!!!!!!!!!!!!!!!!!!!!!!!", source->extra_size );
 			log_qcy(DEBUG_SERIOUS, "msg from %d and message = %x", source->sender, source->message );
@@ -97,56 +112,131 @@ int msg_deep_copy(message_t *dest, message_t *source)
 	return 0;
 }
 
-void msg_buffer_init(message_buffer_t *buff,int overflow )
+void msg_buffer_init(message_buffer_t *buff, int overflow)
 {
-	if( !buff->init ) {
-		buff->head = 0;
-		buff->tail = 0;
-		pthread_rwlock_init(&buff->lock, NULL);
-		buff->init = 1;
-		buff->overflow = overflow;
-		for(int i=0;i<MSG_BUFFER_SIZE;i++) {
-			if( buff->buffer[i].arg != NULL && buff->buffer[i].arg_size>0) {
+	buff->head = 0;
+	buff->tail = 0;
+	buff->sequence = 0;
+	buff->overflow = overflow;
+	pthread_rwlock_init(&buff->lock, NULL);
+	for(int i=0;i<MSG_BUFFER_SIZE;i++) {
+		if( buff->buffer[i].arg != NULL && buff->buffer[i].arg_size>0) {
+			#ifdef MEMORY_POOL
+				elr_mpl_free( buff->buffer[i].arg );
+			#else
 				free( buff->buffer[i].arg );
-				buff->buffer[i].arg = NULL;
-				buff->buffer[i].arg_size = 0;
-			}
-			if( buff->buffer[i].extra != NULL && buff->buffer[i].extra_size>0) {
+			#endif
+			buff->buffer[i].arg = NULL;
+			buff->buffer[i].arg_size = 0;
+		}
+		if( buff->buffer[i].extra != NULL && buff->buffer[i].extra_size>0) {
+			#ifdef MEMORY_POOL
+				elr_mpl_free( buff->buffer[i].extra );
+			#else
 				free( buff->buffer[i].extra );
-				buff->buffer[i].extra = NULL;
-				buff->buffer[i].extra_size = 0;
-			}
+			#endif
+			buff->buffer[i].extra = NULL;
+			buff->buffer[i].extra_size = 0;
 		}
 	}
+	buff->init = 1;
 }
+
+void msg_buffer_init2(message_buffer_t *buff, int overflow, pthread_mutex_t *mutex)
+{
+	pthread_mutex_lock(mutex);
+	msg_buffer_init(buff,overflow);
+	pthread_mutex_unlock(mutex);
+}
+
 
 void msg_buffer_release(message_buffer_t *buff)
 {
-	if( buff->init ) {
-		buff->head = 0;
-		buff->tail = 0;
-		pthread_rwlock_destroy(&buff->lock);
-		buff->init = 0;
-		for(int i=0;i<MSG_BUFFER_SIZE;i++) {
-			if( buff->buffer[i].arg != NULL && buff->buffer[i].arg_size>0 ) {
+	int i;
+	buff->head = 0;
+	buff->tail = 0;
+	buff->sequence = 0;
+	pthread_rwlock_destroy(&buff->lock);
+	for(i=0;i<MSG_BUFFER_SIZE;i++) {
+		if( buff->buffer[i].arg != NULL && buff->buffer[i].arg_size>0) {
+			#ifdef MEMORY_POOL
+				elr_mpl_free( buff->buffer[i].arg );
+			#else
 				free( buff->buffer[i].arg );
-				buff->buffer[i].arg = NULL;
-				buff->buffer[i].arg_size = 0;
-			}
-			if( buff->buffer[i].extra != NULL && buff->buffer[i].extra_size>0) {
+			#endif
+			buff->buffer[i].arg = NULL;
+			buff->buffer[i].arg_size = 0;
+		}
+		if( buff->buffer[i].extra != NULL && buff->buffer[i].extra_size>0) {
+			#ifdef MEMORY_POOL
+				elr_mpl_free( buff->buffer[i].extra );
+			#else
 				free( buff->buffer[i].extra );
-				buff->buffer[i].extra = NULL;
-				buff->buffer[i].extra_size = 0;
-			}
+			#endif
+			buff->buffer[i].extra = NULL;
+			buff->buffer[i].extra_size = 0;
 		}
 	}
+	buff->init = 0;
+}
+
+void msg_buffer_release2(message_buffer_t *buff, pthread_mutex_t *mutex)
+{
+	int i;
+	pthread_mutex_lock(mutex);
+	msg_buffer_release(buff);
+	pthread_mutex_unlock(mutex);
+}
+
+int msg_buffer_probe_item(message_buffer_t *buff, int n, int *id)
+{
+	int index;
+	if( msg_buffer_is_empty(buff) ) {
+		return 1;
+	}
+	index = ((buff->tail + n) & MSG_BUFFER_MASK);
+	if(  index >= buff->head ) {
+		return 1;
+	}
+	*id = buff->buffer[index].message;
+	return 0;
+}
+
+int msg_buffer_probe_item_extra(message_buffer_t *buff, int n, int *id, void**arg)
+{
+	int index;
+	if( msg_buffer_is_empty(buff) ) {
+		return 1;
+	}
+	index = ((buff->tail + n) & MSG_BUFFER_MASK);
+	if(  index >= buff->head ) {
+		return 1;
+	}
+	*id = buff->buffer[index].message;
+	*arg = buff->buffer[index].arg_in.handler;
+	return 0;
+}
+
+int msg_buffer_swap_item(message_buffer_t *buff, int org, int dest)
+{
+	int org_index, dest_index;
+	message_t temp;
+	if( org == dest) return 1;
+	org_index = ((buff->tail + org) & MSG_BUFFER_MASK);
+	dest_index = ((buff->tail + dest) & MSG_BUFFER_MASK);
+	//swap
+	msg_init(&temp);
+	msg_deep_copy( &temp, &(buff->buffer[org_index]) );
+	msg_free(&(buff->buffer[org_index]));
+	msg_deep_copy( &(buff->buffer[org_index]), &(buff->buffer[dest_index]));
+	msg_free(&(buff->buffer[dest_index]));
+	msg_deep_copy( &(buff->buffer[dest_index]), &temp );
+	msg_free(&temp);
+	return 0;
 }
 
 int msg_buffer_pop(message_buffer_t *buff, message_t *data )
 {
-	if( data == NULL) {
-		return -1;
-	}
 	if( msg_buffer_is_empty(buff) ) {
 		return 1;
 	}
@@ -154,12 +244,20 @@ int msg_buffer_pop(message_buffer_t *buff, message_t *data )
 	msg_deep_copy( data, &(buff->buffer[buff->tail]));
 	// free the memory allocated in the push process
 	if( buff->buffer[buff->tail].arg_size > 0 && buff->buffer[buff->tail].arg != NULL) {
-		free( buff->buffer[buff->tail].arg );
+		#ifdef MEMORY_POOL
+			elr_mpl_free( buff->buffer[buff->tail].arg );
+		#else
+			free( buff->buffer[buff->tail].arg );
+		#endif
 		buff->buffer[buff->tail].arg = NULL;
 		buff->buffer[buff->tail].arg_size = 0;
 	}
 	if( buff->buffer[buff->tail].extra_size > 0 && buff->buffer[buff->tail].extra != NULL) {
-		free( buff->buffer[buff->tail].extra );
+		#ifdef MEMORY_POOL
+			elr_mpl_free( buff->buffer[buff->tail].extra );
+		#else
+			free( buff->buffer[buff->tail].extra );
+		#endif
 		buff->buffer[buff->tail].extra = NULL;
 		buff->buffer[buff->tail].extra_size = 0;
 	}
@@ -178,22 +276,33 @@ int msg_buffer_push(message_buffer_t *buff, message_t *data)
 		if( buff->overflow == MSG_BUFFER_OVERFLOW_YES) {
 			//free old data
 			if( buff->buffer[buff->tail].arg != NULL && buff->buffer[buff->tail].arg_size>0) {
-				free( buff->buffer[buff->tail].arg );
+				#ifdef MEMORY_POOL
+					elr_mpl_free( buff->buffer[buff->tail].arg );
+				#else
+					free( buff->buffer[buff->tail].arg );
+				#endif
 				buff->buffer[buff->tail].arg = NULL;
 				buff->buffer[buff->tail].arg_size = 0;
 			}
 			if( buff->buffer[buff->tail].extra != NULL && buff->buffer[buff->tail].extra_size>0) {
-				free( buff->buffer[buff->tail].extra );
+				#ifdef MEMORY_POOL
+					elr_mpl_free( buff->buffer[buff->tail].extra );
+				#else
+					free( buff->buffer[buff->tail].extra );
+				#endif
 				buff->buffer[buff->tail].extra = NULL;
 				buff->buffer[buff->tail].extra_size = 0;
 			}
 			buff->tail = ((buff->tail + 1) & MSG_BUFFER_MASK);
 		}
-		else
+		else {
 			return 1;
+		}
 	}
+	buff->sequence++;
 	//data copy
 	msg_deep_copy( &(buff->buffer[buff->head]), data );
+	buff->buffer[buff->head].sequence = buff->sequence;
 	//renew head
 	buff->head = ((buff->head + 1) & MSG_BUFFER_MASK);
 	return 0;
@@ -209,14 +318,38 @@ int msg_free(message_t *data)
 	if( data == NULL )
 		return -1;
 	if( data->arg!=NULL && data->arg_size>0 ) {
-		free(data->arg);
+		#ifdef MEMORY_POOL
+			elr_mpl_free(data->arg);
+		#else
+			free(data->arg);
+		#endif
 		data->arg = NULL;
 		data->arg_size = 0;
 	}
 	if( data->extra!=NULL && data->extra_size>0) {
-		free(data->extra);
+		#ifdef MEMORY_POOL
+			elr_mpl_free(data->extra);
+		#else
+			free(data->extra);
+		#endif
 		data->extra = NULL;
 		data->extra_size = 0;
 	}
 	return 0;
+}
+
+int msg_is_system(int id)
+{
+	if( (id & 0xFFF0) == 0 )
+		return 1;
+	else
+		return 0;
+}
+
+int msg_is_response(int id)
+{
+	if( (id & 0xF000) )
+		return 1;
+	else
+		return 0;
 }
