@@ -75,7 +75,7 @@ int msg_deep_copy(message_t *dest, message_t *source);
 int msg_buffer_is_empty(message_buffer_t *buffer);
 int msg_buffer_is_full(message_buffer_t *buffer);
 int msg_buffer_num_items(message_buffer_t *buffer);
-int msg_buffer_probe_item(message_buffer_t *buff, int n, int *id);
+int msg_buffer_probe_item(message_buffer_t *buff, int n, message_t *msg);
 int msg_buffer_probe_item_extra(message_buffer_t *buff, int n, int *id, void**arg);
 int msg_buffer_swap_item(message_buffer_t *buff, int org, int dest);
 int msg_is_system(int id);

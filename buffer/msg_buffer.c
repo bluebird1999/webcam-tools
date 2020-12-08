@@ -188,7 +188,7 @@ void msg_buffer_release2(message_buffer_t *buff, pthread_mutex_t *mutex)
 	pthread_mutex_unlock(mutex);
 }
 
-int msg_buffer_probe_item(message_buffer_t *buff, int n, int *id)
+int msg_buffer_probe_item(message_buffer_t *buff, int n, message_t *msg)
 {
 	int index;
 	if( msg_buffer_is_empty(buff) ) {
@@ -198,7 +198,7 @@ int msg_buffer_probe_item(message_buffer_t *buff, int n, int *id)
 	if(  index >= buff->head ) {
 		return 1;
 	}
-	*id = buff->buffer[index].message;
+	memcpy(msg, &(buff->buffer[index]), sizeof(message_t));
 	return 0;
 }
 
