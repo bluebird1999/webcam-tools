@@ -36,6 +36,22 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  */
+/*
+ * helper
+ */
+static int msg_buffer_swap_item(message_buffer_t *buff, int org, int dest)
+{
+	message_t temp;
+	//swap
+	msg_init(&temp);
+	msg_deep_copy( &temp, &(buff->buffer[org]) );
+	msg_free(&(buff->buffer[org]));
+	msg_deep_copy( &(buff->buffer[org]), &(buff->buffer[dest]));
+	msg_free(&(buff->buffer[dest]));
+	msg_deep_copy( &(buff->buffer[dest]), &temp );
+	msg_free(&temp);
+	return 0;
+}
 
 /*
  * interface
@@ -195,7 +211,7 @@ int msg_buffer_probe_item(message_buffer_t *buff, int n, message_t *msg)
 		return 1;
 	}
 	index = ((buff->tail + n) & MSG_BUFFER_MASK);
-	if(  index >= buff->head ) {
+	if(  index == buff->head ) {
 		return 1;
 	}
 	memcpy(msg, &(buff->buffer[index]), sizeof(message_t));
@@ -209,7 +225,7 @@ int msg_buffer_probe_item_extra(message_buffer_t *buff, int n, int *id, void**ar
 		return 1;
 	}
 	index = ((buff->tail + n) & MSG_BUFFER_MASK);
-	if(  index >= buff->head ) {
+	if(  index == buff->head ) {
 		return 1;
 	}
 	*id = buff->buffer[index].message;
@@ -217,21 +233,23 @@ int msg_buffer_probe_item_extra(message_buffer_t *buff, int n, int *id, void**ar
 	return 0;
 }
 
-int msg_buffer_swap_item(message_buffer_t *buff, int org, int dest)
+int msg_buffer_swap(message_buffer_t *buff, int org, int dest)
 {
-	int org_index, dest_index;
+	int org_index, dest_index, rundown_index, last_index;
 	message_t temp;
 	if( org == dest) return 1;
 	org_index = ((buff->tail + org) & MSG_BUFFER_MASK);
 	dest_index = ((buff->tail + dest) & MSG_BUFFER_MASK);
-	//swap
-	msg_init(&temp);
-	msg_deep_copy( &temp, &(buff->buffer[org_index]) );
-	msg_free(&(buff->buffer[org_index]));
-	msg_deep_copy( &(buff->buffer[org_index]), &(buff->buffer[dest_index]));
-	msg_free(&(buff->buffer[dest_index]));
-	msg_deep_copy( &(buff->buffer[dest_index]), &temp );
-	msg_free(&temp);
+	//swap from the queue top
+	msg_buffer_swap_item(buff, org_index, dest_index);
+	//search upward till the top is found
+	last_index = dest_index;
+	rundown_index = ( (last_index - 1) & MSG_BUFFER_MASK);
+	while( rundown_index != org_index ) {
+		msg_buffer_swap_item(buff, rundown_index, last_index);
+		last_index = rundown_index;
+		rundown_index = ( (last_index - 1) & MSG_BUFFER_MASK);
+	}
 	return 0;
 }
 
