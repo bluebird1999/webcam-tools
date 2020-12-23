@@ -97,3 +97,18 @@ int misc_substr(char dst[], char src[], int start, int len)
     dst[i]='\0';
     return i;
 }
+
+int misc_mips_address_check(unsigned int address)
+{
+	if( address == 0)
+		return 1;
+/*	else if( (address | 0x3) )
+		return 1;
+		*/
+	else if( (address > 0x80000000) )
+		return 1;
+	else if( (address < 0x1000) )
+		return 1;
+	else
+		return 0;
+}

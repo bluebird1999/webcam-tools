@@ -24,7 +24,7 @@
 /*
  * define
  */
-#define		TOOLS_VERSION_STRING		"alpha-4.2"
+#define		TOOLS_VERSION_STRING		"alpha-5.0"
 
 /*
  * structure

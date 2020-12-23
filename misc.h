@@ -30,5 +30,6 @@ int misc_set_bit(int *a, int bit, int value);
 int misc_clear_bit(int *a, int bit);
 int misc_full_bit(int a, int num);
 int misc_substr(char *dst, char *src, int start, int len);
+int misc_mips_address_check(unsigned int address);
 
 #endif /* TOOLS_MISC_H_ */
