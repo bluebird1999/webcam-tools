@@ -17,6 +17,8 @@
 #include <string.h>
 #include <time.h>
 #include <malloc.h>
+
+
 //program header
 
 //server header
@@ -55,32 +57,30 @@ unsigned int time_get_ms(void)
 
 void time_get_now_str(char *str)
 {
-    struct tm *ptm;
     long ts;
     ts = time(NULL);
     struct tm tt = {0};
-    ptm = localtime_r(&ts, &tt);
-	sprintf(str, "%04d%02d%02d%02d%02d%02d", ptm->tm_year+1900,
-											 ptm->tm_mon+1,
-											 ptm->tm_mday,
-											 ptm->tm_hour,
-											 ptm->tm_min,
-											 ptm->tm_sec);
+    localtime_r(&ts, &tt);
+	sprintf(str, "%04d%02d%02d%02d%02d%02d", tt.tm_year+1900,
+											 tt.tm_mon+1,
+											 tt.tm_mday,
+											 tt.tm_hour,
+											 tt.tm_min,
+											 tt.tm_sec);
 
     return;
 }
 
 void time_get_now_str_format(char *str)
 {
-    struct tm *ptm;
     long ts;
     ts = time(NULL);
     struct tm tt = {0};
-    ptm = localtime_r(&ts, &tt);
-	sprintf(str, "%02d:%02d:%02d.%03d", 	 ptm->tm_hour,
-											 ptm->tm_min,
-											 ptm->tm_sec,
-											 time_get_ms());
+    localtime_r(&ts, &tt);
+	sprintf(str, "%02d:%02d:%02d.%03d", 	tt.tm_hour,
+											tt.tm_min,
+											tt.tm_sec,
+											time_get_ms());
 
     return;
 }
@@ -121,13 +121,14 @@ long long int time_get_now_stamp(void)
 
 int time_stamp_to_date(long long int stamp, char *dd)
 {
-	struct tm *tmp_time = localtime(&stamp);
+	struct tm tt = {0};
+	localtime_r(&stamp, &tt);
 //	strftime(dd, 32, "%04Y%02m%02d%02H%02M%02S", tmp_time);
-	sprintf(dd, "%04d%02d%02d%02d%02d%02d", tmp_time->tm_year+1900,
-			tmp_time->tm_mon+1,
-			tmp_time->tm_mday,
-			tmp_time->tm_hour,
-			tmp_time->tm_min,
-			tmp_time->tm_sec);
+	sprintf(dd, "%04d%02d%02d%02d%02d%02d", tt.tm_year+1900,
+			tt.tm_mon+1,
+			tt.tm_mday,
+			tt.tm_hour,
+			tt.tm_min,
+			tt.tm_sec);
 	return 0;
 }

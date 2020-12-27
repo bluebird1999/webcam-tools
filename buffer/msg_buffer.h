@@ -72,6 +72,7 @@ void msg_buffer_release2(message_buffer_t *buff, pthread_mutex_t *mutex);
 int msg_init(message_t *data);
 int msg_free(message_t *data);
 int msg_deep_copy(message_t *dest, message_t *source);
+void msg_copy(message_t *dest, message_t *source);
 int msg_buffer_is_empty(message_buffer_t *buffer);
 int msg_buffer_is_full(message_buffer_t *buffer);
 int msg_buffer_num_items(message_buffer_t *buffer);

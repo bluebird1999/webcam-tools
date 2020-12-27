@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <malloc.h>
+
 //program header
 #include "../../manager/manager_interface.h"
 //server header
@@ -71,6 +72,10 @@ int msg_buffer_num_items(message_buffer_t *buffer)
   return ((buffer->head - buffer->tail) & MSG_BUFFER_MASK);
 }
 
+void msg_copy(message_t *dest, message_t *source)
+{
+	memcpy( dest, source, sizeof(message_t) );
+}
 
 int msg_deep_copy(message_t *dest, message_t *source)
 {

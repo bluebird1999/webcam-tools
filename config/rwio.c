@@ -87,12 +87,13 @@ char* read_json_file(const char *filename)
     fileSize = ftell(fp);
 
     char *data = NULL;
-    data = malloc(fileSize);
+//  data = malloc(fileSize);
+    data = malloc(fileSize + 1);
     if(!data) {
         fclose(fp);
         return NULL;
     }
-    memset(data, 0, fileSize);
+    memset(data, 0, fileSize+1);
     if(0 != fseek(fp, 0, SEEK_SET)) {
     	free(data);
         fclose(fp);

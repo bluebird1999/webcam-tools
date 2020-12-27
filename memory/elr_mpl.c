@@ -2,17 +2,20 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
+#include <malloc.h>
+#ifdef DMALLOC_ENABLE
+#include <dmalloc.h>
+#endif
 #include "elr_mpl.h"
 
 #ifdef ELR_USE_THREAD
 #include "elr_mtx.h"
 #endif // ELR_USE_THREAD
 
-/*×î´óÄÚ´æÇÐÆ¬µÄ³ß´ç*/
+/*ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½Ä³ß´ï¿½*/
 /** max memory node size. it can be changed to fit the memory consume more.  */
 #define ELR_MAX_SLICE_SIZE       32768  /*32KB*/
-/*×î´óÄÚ´æÇÐÆ¬µÄÊýÄ¿*/
+/*ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½Ä¿*/
 /** max memory slice size. it can be changed to fit the memory consume more. */
 #define ELR_MAX_SLICE_COUNT      64  /*64*/
 
@@ -24,7 +27,7 @@ typedef struct __elr_mem_node
     struct __elr_mem_pool       *owner;
     struct __elr_mem_node       *prev;
     struct __elr_mem_node       *next;
-	/*Ê¹ÓÃ¹ýµÄsliceµÄÊýÁ¿*/
+	/*Ê¹ï¿½Ã¹ï¿½ï¿½ï¿½sliceï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     size_t                       used_slice_count;
     char                        *first_avail;
 }
@@ -34,9 +37,9 @@ typedef struct __elr_mem_slice
 {
     struct __elr_mem_slice      *prev;
     struct __elr_mem_slice      *next;
-	/*ÄÚ´æÇÐÆ¬ËùÊôµÄÄÚ´æ½Úµã*/
+	/*ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Úµï¿½*/
     elr_mem_node                *node;
-	/*ÄÚÇÐÆ¬µÄ±êÇ©£¬³õÊ¼ÖµÎª0£¬Ã¿Ò»´Î´ÓÄÚ´æ³ØÖÐÈ¡³öºÍ¹é»¹¶¼»á¼Ó1*/
+	/*ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½Ä±ï¿½Ç©ï¿½ï¿½ï¿½ï¿½Ê¼ÖµÎª0ï¿½ï¿½Ã¿Ò»ï¿½Î´ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½Í¹é»¹ï¿½ï¿½ï¿½ï¿½ï¿½1*/
 	int                          tag;
 }
 elr_mem_slice;
@@ -50,13 +53,13 @@ typedef struct __elr_mem_pool
     size_t                       slice_count;
     size_t                       slice_size;
     size_t                       node_size;
-	/*ËùÓÐelr_mem_node×é³ÉµÄÁ´±í*/
+	/*ï¿½ï¿½ï¿½ï¿½elr_mem_nodeï¿½ï¿½Éµï¿½ï¿½ï¿½ï¿½ï¿½*/
     elr_mem_node                *first_node;
-	/*¸Õ¸Õ´´½¨µÄelr_mem_node*/
+	/*ï¿½Õ¸Õ´ï¿½ï¿½ï¿½ï¿½ï¿½elr_mem_node*/
     elr_mem_node                *newly_alloc_node;
-	/*¿ÕÏÐµÄÄÚ´æÇÐÆ¬Á´±í*/
+	/*ï¿½ï¿½ï¿½Ðµï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½*/
     elr_mem_slice               *first_free_slice;
-	/*ÈÝÄÉ±¾ÄÚ´æ³Ø¶ÔÏóµÄÄÚ´æÇÐÆ¬µÄ±êÇ©*/
+	/*ï¿½ï¿½ï¿½É±ï¿½ï¿½Ú´ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½Ä±ï¿½Ç©*/
 	int                          slice_tag;
 #ifdef ELR_USE_THREAD
     elr_mtx                                pool_mutex;
@@ -65,10 +68,10 @@ typedef struct __elr_mem_pool
 elr_mem_pool;
 
 
-/*È«¾ÖÄÚ´æ³Ø*/
+/*È«ï¿½ï¿½ï¿½Ú´ï¿½ï¿½*/
 static elr_mem_pool   g_mem_pool;
 
-/*È«¾ÖÄÚ´æ³ØÒýÓÃ¼ÆÊý*/
+/*È«ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½*/
 #ifdef ELR_USE_THREAD
 static elr_atomic_t     g_mpl_refs = ELR_ATOMIC_ZERO;
 #else
@@ -76,19 +79,19 @@ static long           g_mpl_refs = 0;
 #endif // ELR_USE_THREAD
 
 
-/*ÎªÄÚ´æ³ØÉêÇëÒ»¸öÄÚ´æ½Úµã*/
+/*Îªï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ú´ï¿½Úµï¿½*/
 void                      _elr_alloc_mem_node(elr_mem_pool *pool);
-/*ÔÚÄÚ´æ³ØµÄ¸Õ¸Õ´´½¨µÄÄÚ´æ½ÚµãÖÐ·ÖÅäÒ»¸öÄÚ´æÇÐÆ¬*/
+/*ï¿½ï¿½ï¿½Ú´ï¿½ØµÄ¸Õ¸Õ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Úµï¿½ï¿½Ð·ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬*/
 elr_mem_slice*            _elr_slice_from_node(elr_mem_pool *pool);
-/*ÔÚÄÚ´æ³ØÖÐ·ÖÅäÒ»¸öÄÚ´æÇÐÆ¬£¬¸Ã·½·¨½«»áµ÷ÓÃÉÏÊöÁ½·½·¨*/
+/*ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ð·ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 elr_mem_slice*            _elr_slice_from_pool(elr_mem_pool *pool);
-/*Ïú»ÙÄÚ´æ³Ø£¬inter±íÊ¾ÊÇ·ñÊÇÄÚ²¿µ÷ÓÃ*/
+/*ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ø£ï¿½interï¿½ï¿½Ê¾ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½*/
 void                      _elr_inter_mpl_destory(elr_mem_pool *pool, int inter);
 
 /*
-** ³õÊ¼»¯ÄÚ´æ³Ø£¬ÄÚ²¿´´½¨Ò»¸öÈ«¾ÖÄÚ´æ³Ø¡£
-** ¸Ã·½·¨¿ÉÒÔ±»ÖØ¸´µ÷ÓÃ¡£
-** Èç¹ûÄÚ´æ³ØÄ£¿éÒÑ¾­³õÊ¼»¯£¬½ö½öÔö¼ÓÒýÓÃ¼ÆÊýÈ»ºó·µ»Ø¡£
+** ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú´ï¿½Ø£ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È«ï¿½ï¿½ï¿½Ú´ï¿½Ø¡ï¿½
+** ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+** ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ä£ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½È»ï¿½ó·µ»Ø¡ï¿½
 */
 ELR_MPL_API int elr_mpl_init()
 {
@@ -127,8 +130,8 @@ ELR_MPL_API int elr_mpl_init()
 }
 
 /*
-** ´´½¨Ò»¸öÄÚ´æ³Ø£¬²¢Ö¸¶¨×î´ó·ÖÅäµ¥Ôª´óÐ¡¡£
-** µÚÒ»¸ö²ÎÊý±íÊ¾¸¸ÄÚ´æ³Ø£¬Èç¹ûÆäÎªNULL£¬±íÊ¾´´½¨µÄÄÚ´æ³ØµÄ¸¸ÄÚ´æ³ØÊÇÈ«¾ÖÄÚ´æ³Ø¡£
+** ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ú´ï¿½Ø£ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½äµ¥Ôªï¿½ï¿½Ð¡ï¿½ï¿½
+** ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ú´ï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªNULLï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ØµÄ¸ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ú´ï¿½Ø¡ï¿½
 */
 ELR_MPL_API elr_mpl_t elr_mpl_create(elr_mpl_ht fpool,size_t obj_size)
 {
@@ -191,9 +194,9 @@ ELR_MPL_API elr_mpl_t elr_mpl_create(elr_mpl_ht fpool,size_t obj_size)
 }
 
 /*
-** ÅÐ¶ÏÄÚ´æ³ØÊÇ·ñÊÇÓÐÐ§µÄ£¬Ò»°ãÔÚ´´½¨Íê³ÉºóÁ¢¼´µ÷ÓÃ¡£
-** ·µ»Ø0±íÊ¾ÎÞÐ§
-** pool²»¿ÉÎªNULL
+** ï¿½Ð¶ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä£ï¿½Ò»ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½Éºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+** ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾ï¿½ï¿½Ð§
+** poolï¿½ï¿½ï¿½ï¿½ÎªNULL
 */
 ELR_MPL_API int  elr_mpl_avail(elr_mpl_ht hpool)
 {
@@ -215,7 +218,7 @@ ELR_MPL_API int  elr_mpl_avail(elr_mpl_ht hpool)
 }
 
 /*
-** ´ÓÄÚ´æ³ØÖÐÉêÇëÄÚ´æ¡£
+** ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´æ¡£
 */
 ELR_MPL_API void*  elr_mpl_alloc(elr_mpl_ht hpool)
 {
@@ -231,7 +234,7 @@ ELR_MPL_API void*  elr_mpl_alloc(elr_mpl_ht hpool)
 
 
 /*
-** »ñÈ¡´ÓÄÚ´æ³ØÖÐÉêÇëµÄÄÚ´æ¿éµÄ³ß´ç¡£
+** ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ä³ß´ç¡£
 */
 ELR_MPL_API size_t elr_mpl_size(void* mem)
 {
@@ -240,7 +243,7 @@ ELR_MPL_API size_t elr_mpl_size(void* mem)
 }
 
 /*
-** ½«ÄÚ´æÍË»Ø¸øÄÚ´æ³Ø¡£Ö´ÐÐ¸Ã·½·¨Ò²¿ÉÄÜ½«ÄÚ´æÍË»Ø¸øÏµÍ³¡£
+** ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ë»Ø¸ï¿½ï¿½Ú´ï¿½Ø¡ï¿½Ö´ï¿½Ð¸Ã·ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½Ü½ï¿½ï¿½Ú´ï¿½ï¿½Ë»Ø¸ï¿½ÏµÍ³ï¿½ï¿½
 */
 ELR_MPL_API void  elr_mpl_free(void* mem)
 {
@@ -263,7 +266,7 @@ ELR_MPL_API void  elr_mpl_free(void* mem)
 }
 
 /*
-** Ïú»ÙÄÚ´æ³ØºÍÆä×ÓÄÚ´æ³Ø¡£
+** ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Øºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ø¡ï¿½
 */
 ELR_MPL_API void elr_mpl_destroy(elr_mpl_ht hpool)
 {
@@ -311,8 +314,8 @@ ELR_MPL_API void elr_mpl_destroy(elr_mpl_ht hpool)
 }
 
 /*
-** ÖÕÖ¹ÄÚ´æ³ØÄ£¿é£¬»áÏú»ÙÈ«¾ÖÄÚ´æ³Ø¼°Æä×ÓÄÚ´æ³Ø¡£
-** ³ÌÐòÖÐ´´½¨µÄÆäËüÄÚ´æ³ØÈç¹ûÃ»ÓÐÏÔÊ¾µÄÊÍ·Å£¬Ö´ÐÐ´Ë²Ù×÷ºóÒ²»á±»ÊÍ·Å¡£
+** ï¿½ï¿½Ö¹ï¿½Ú´ï¿½ï¿½Ä£ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ú´ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ø¡ï¿½
+** ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Í·Å£ï¿½Ö´ï¿½Ð´Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½á±»ï¿½Í·Å¡ï¿½
 */
 ELR_MPL_API void elr_mpl_finalize()
 {
@@ -382,7 +385,7 @@ elr_mem_slice* _elr_slice_from_node(elr_mem_pool *pool)
 }
 
 /*
-** ´ÓÄÚ´æ³ØÖÐÉêÇëÄÚ´æ¡£
+** ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´æ¡£
 */
 elr_mem_slice* _elr_slice_from_pool(elr_mem_pool* pool)
 
@@ -464,7 +467,7 @@ void _elr_inter_mpl_destory(elr_mem_pool *pool,int inter)
 		temp_node = pool->first_node ;
 	}
 
-	/*Èç¹û²»ÊÇ¸ù½Úµã*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½Úµï¿½*/
 	if(pool != &g_mem_pool)
 		elr_mpl_free(pool);
 
