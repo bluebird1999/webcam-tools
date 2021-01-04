@@ -45,8 +45,9 @@
 #include <limits.h>
 #include <ctype.h>
 #include <malloc.h>
-
-
+#ifdef DMALLOC_ENABLE
+#include <dmalloc.h>
+#endif
 #ifdef ENABLE_LOCALES
 #include <locale.h>
 #endif
@@ -331,6 +332,7 @@ loop_end:
     }
 
     item->valuedouble = number;
+    item->valueint64 = number;
 
     /* use saturation in case of overflow */
     if (number >= INT_MAX)
@@ -368,6 +370,7 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
         object->valueint = (int)number;
     }
 
+    object->valueint64 = (int64)number;
     return object->valuedouble = number;
 }
 
@@ -2312,6 +2315,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
     {
         item->type = cJSON_Number;
         item->valuedouble = num;
+        item->valueint64 = num;
 
         /* use saturation in case of overflow */
         if (num >= INT_MAX)
@@ -2586,6 +2590,7 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse)
     /* Copy over all vars */
     newitem->type = item->type & (~cJSON_IsReference);
     newitem->valueint = item->valueint;
+    newitem->valueint64 = item->valueint64;
     newitem->valuedouble = item->valuedouble;
     if (item->valuestring)
     {
@@ -3021,5 +3026,4 @@ int cJosn_Read_Int(cJSON *jso, const char *key)
         return -1;
     }
 }
-
 

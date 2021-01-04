@@ -17,7 +17,9 @@
 #include <string.h>
 #include <time.h>
 #include <malloc.h>
-
+#ifdef DMALLOC_ENABLE
+#include <dmalloc.h>
+#endif
 
 //program header
 

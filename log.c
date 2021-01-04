@@ -16,7 +16,9 @@
 #include <sys/prctl.h>
 #include <sys/time.h>
 #include <malloc.h>
-
+#ifdef DMALLOC_ENABLE
+#include <dmalloc.h>
+#endif
 #include <stdlib.h>
 #include <stdarg.h>
 //program header
