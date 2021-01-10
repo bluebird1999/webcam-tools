@@ -52,5 +52,6 @@ long long int time_date_to_stamp(char *date);
 long long int time_get_now_stamp(void);
 int time_stamp_to_date(long long int stamp, char *date);
 unsigned int time_get_ms(void);
+int time_stamp_to_date_with_zone(long long int stamp, char *dd, int standard_zone, int zone);
 
 #endif /* TOOLS_TIME_H_ */

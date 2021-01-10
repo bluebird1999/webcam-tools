@@ -319,6 +319,7 @@ int msg_buffer_push(message_buffer_t *buff, message_t *data)
 				buff->buffer[buff->tail].extra_size = 0;
 			}
 			buff->tail = ((buff->tail + 1) & MSG_BUFFER_MASK);
+			log_qcy(DEBUG_INFO, "overflow happend------msg %x-------arg_size=%d extra_size = %d",data->message, data->arg_size, data->extra_size );
 		}
 		else {
 			return 1;

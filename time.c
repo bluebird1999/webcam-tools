@@ -112,6 +112,33 @@ long long int time_date_to_stamp(char *date)
 	return t;
 }
 
+long long int time_date_to_stamp_with_zone(char *date, int standard_zone, int zone)
+{
+//	struct tm* tmp_time = (struct tm*)malloc(sizeof(struct tm));
+//	strptime(date,"%Y%m%d%H%M%S",tmp_time);
+//	time_t t = mktime(tmp_time);
+//	free(tmp_time);
+    struct 	tm tm;
+    char	temp[4];
+    memset(&tm, 0, sizeof(struct tm));
+    misc_substr(temp, date, 0, 4);
+    tm.tm_year = atoi( temp ) - 1900;
+    misc_substr(temp, date, 4, 2);
+    tm.tm_mon = atoi( temp ) - 1;
+    misc_substr(temp, date, 6, 2);
+    tm.tm_mday = atoi( temp );
+    misc_substr(temp, date, 8, 2);
+    tm.tm_hour = atoi( temp );
+    misc_substr(temp, date, 10, 2);
+    tm.tm_min = atoi( temp );
+    misc_substr(temp, date, 12, 2);
+    tm.tm_sec = atoi( temp );
+	time_t t = mktime(&tm);
+	zone-=standard_zone;
+	t += (zone * 360);
+	return t;
+}
+
 long long int time_get_now_stamp(void)
 {
     struct timeval tv;
@@ -124,6 +151,22 @@ long long int time_get_now_stamp(void)
 int time_stamp_to_date(long long int stamp, char *dd)
 {
 	struct tm tt = {0};
+	localtime_r(&stamp, &tt);
+//	strftime(dd, 32, "%04Y%02m%02d%02H%02M%02S", tmp_time);
+	sprintf(dd, "%04d%02d%02d%02d%02d%02d", tt.tm_year+1900,
+			tt.tm_mon+1,
+			tt.tm_mday,
+			tt.tm_hour,
+			tt.tm_min,
+			tt.tm_sec);
+	return 0;
+}
+
+int time_stamp_to_date_with_zone(long long int stamp, char *dd, int standard_zone, int zone)
+{
+	struct tm tt = {0};
+	zone-=standard_zone;
+	stamp -= (zone * 360);
 	localtime_r(&stamp, &tt);
 //	strftime(dd, 32, "%04Y%02m%02d%02H%02M%02S", tmp_time);
 	sprintf(dd, "%04d%02d%02d%02d%02d%02d", tt.tm_year+1900,
